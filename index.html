@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Tree Tool</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  .container {
+    max-width: 800px;
+    margin: auto;
+    margin-top: 50px;
+  }
+  .node {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    position: absolute;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+  }
+  .connectors {
+    position: relative;
+  }
+  .connector {
+    position: absolute;
+    border-left: 1px solid #ccc;
+    width: 0;
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1 class="text-center mb-4">Decision Tree Tool</h1>
+  
+  <div id="decision-tree" class="connectors">
+
+  </div>
+
+  <button id="add-node-btn" class="btn btn-primary">Add Node</button>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  $(document).ready(function() {
+    let nodeCount = 0;
+    let selectedNode = null;
+    let connectors = [];
+
+    $('#add-node-btn').click(function() {
+      nodeCount++;
+      let newNode = $('<div class="node" id="node-' + nodeCount + '">Node ' + nodeCount + '</div>');
+      newNode.css({top: Math.random() * 300, left: Math.random() * 600});
+      newNode.appendTo('#decision-tree').draggable({
+        containment: "parent"
+      });
+    });
+    $('#decision-tree').on('dblclick', '.node', function() {
+      let currentNode = $(this);
+      let nodeName = prompt("Enter new name for the node:", currentNode.text());
+      if (nodeName !== null && nodeName !== "") {
+        currentNode.text(nodeName);
+      }
+    });
+    $('#decision-tree').on('click', '.node', function() {
+      if (selectedNode !== null && selectedNode.attr('id') !== $(this).attr('id')) {
+        let connector = $('<div class="connector"></div>');
+        let startPos = selectedNode.position();
+        let endPos = $(this).position();
+        connector.css({left: startPos.left + selectedNode.width(), top: startPos.top + selectedNode.height() / 2});
+        let length = Math.sqrt(Math.pow(endPos.left - startPos.left, 2) + Math.pow(endPos.top - startPos.top, 2));
+        connector.width(length);
+        let angle = Math.atan2(endPos.top - startPos.top, endPos.left - startPos.left) * 180 / Math.PI;
+        connector.css({transform: 'rotate(' + angle + 'deg)'});
+        $('#decision-tree').append(connector);
+        connectors.push(connector);
+        selectedNode = null;
+      } else {
+        selectedNode = $(this);
+      }
+    });
+    $('#decision-tree').on('contextmenu', '.node', function(e) {
+      e.preventDefault(); 
+      let nodeId = $(this).attr('id');
+      $(this).remove();
+      connectors = connectors.filter(connector => {
+        return !connector.hasClass(nodeId);
+      });
+      redrawConnectors();
+    });
+
+    function redrawConnectors() {
+      connectors.forEach(connector => {
+        let startNodeId = connector.prev().attr('id');
+        let endNodeId = connector.next().attr('id');
+        let startPos = $('#'+startNodeId).position();
+        let endPos = $('#'+endNodeId).position();
+        connector.css({left: startPos.left + $('#'+startNodeId).width(), top: startPos.top + $('#'+startNodeId).height() / 2});
+        let length = Math.sqrt(Math.pow(endPos.left - startPos.left, 2) + Math.pow(endPos.top - startPos.top, 2));
+        connector.width(length);
+        let angle = Math.atan2(endPos.top - startPos.top, endPos.left - startPos.left) * 180 / Math.PI;
+        connector.css({transform: 'rotate(' + angle + 'deg)'});
+      });
+    }
+  });
+</script>
+</body>
+</html>
